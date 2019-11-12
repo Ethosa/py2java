@@ -30,7 +30,15 @@ class PythonToJava(Translator):
         # if CONDITION: # smth
         # if (CONDITION){ # smth }
         (r"(?P<blockIndent>[ ]*)if[ ]*((?P<condition>[^:\r\n]+?))[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>if (\g<condition>) {\n\g<body>\g<blockIndent>}\n ", None, 70),
-
+        # while CONDITION: # smth
+        # while (CONDITION){ # smth }
+        (r"(?P<blockIndent>[ ]*)while[ ]*((?P<condition>[^:\r\n]+?))[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>while (\g<condition>) {\n\g<body>\g<blockIndent>}\n ", None, 70),
+        # elif CONDITION: # smth
+        # else if (CONDITION){ # smth }
+        (r"(?P<blockIndent>[ ]*)elif[ ]*((?P<condition>[^:\r\n]+?))[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>else if (\g<condition>) {\n\g<body>\g<blockIndent>}\n ", None, 70),
+        # else: # smth
+        # else { # smth }
+        (r"(?P<blockIndent>[ ]*)else[ ]*(([^:\r\n]+?))[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>else {\n\g<body>\g<blockIndent>}\n ", None, 70)
     ]
 
     LAST_RULES = []
