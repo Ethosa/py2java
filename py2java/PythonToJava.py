@@ -4,12 +4,14 @@
 from retranslator import Translator
 
 class PythonToJava(Translator):
-    def __init__(self, codeString="", extra=[], useRegex=False):
+    def __init__(self, codeString="", extra=[], useRegex=False, javaVersion=10):
         """initialize class
         
         Keyword Arguments:
             codeString {str} -- source code on C# (default: {""})
             extra {list} -- include your own rules (default: {[]})
+            useRegex {bool} -- this parameter tells you to use regex (default: {False})
+            javaVersion {int} -- this parameter added specifical rules for selected version (default: {10})
         """
         self.codeString = codeString
         self.extra = extra
@@ -19,6 +21,8 @@ class PythonToJava(Translator):
         self.rules = PythonToJava.FIRST_RULES[:]
         self.rules.extend(self.extra)
         self.rules.extend(PythonToJava.LAST_RULES)
+        if javaVersion < 10:
+            self.rules.extend(PythonToJava.LESS_THEN_TEN)
         Translator.__init__(self, codeString, self.rules, useRegex)
 
     # Rules for translate code
@@ -28,10 +32,10 @@ class PythonToJava(Translator):
         (r"\t", r"    ", None, 0),
         # True
         # true
-        (r"True", r"true", None, 0),
+        (r"(?!\")(?P<indent>(?<!\")[ ]*)True(?P<indent1>[ ]*)(?!\")", r"\g<indent>true\g<indent1>", None, 0),
         # False
         # false
-        (r"False", r"false", None, 0),
+        (r"(?!\")(?P<indent>(?<!\")[ ]*)False(?P<indent1>(?<!\")[ ]*)(?!\")", r"\g<indent>false\g<indent1>", None, 0),
         # pass
         # 
         (r"pass", r"", None, 0),
@@ -111,15 +115,15 @@ class PythonToJava(Translator):
         # a = "hi"
         # var a = "hello world"
         # a = "hi"
-        (r"(?P<firstAssignment>(?P<variable>[_a-zA-Z]+)[ ]*=[ ]*[^\r\n]+)(?P<otherAssigments>([\s\S]+(?P=variable) = [^\r\n]+)*)", r"var \g<firstAssignment>\g<otherAssigments>", None, 0),
+        (r"(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*[^\r\n]+)(?P<otherAssigments>([\s\S]+(?P=variable)[ ]*=[ ]*[^\r\n#$])*)?", r"var \g<firstAssignment>\g<otherAssigments>", None, 0),
         # for i in range(2): smth
         # for (int i = 0; i < 2; i += 1){ smth }
         (r"(?P<blockIndent>[ ]*)for[ ]*((?P<variableName>\S+))[ ]*in[ ]*range\((?P<number1>\d*), (?P<number2>\d*), (?P<number3>\d*)\)[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>for (int \g<variableName> = \g<number1>; \g<variableName> < \g<number2>; \g<variableName> += \g<number3>){\n\g<body>\g<blockIndent>}\n", None, 70),
         # for i in range(5, 1, -2): smth
         # for (int i = 5; i > 1; i -= 2){ smth }
         (r"(?P<blockIndent>[ ]*)for[ ]*((?P<variableName>\S+))[ ]*in[ ]*range\((?P<number1>\d*), (?P<number2>\d*), -(?P<number3>\d*)\)[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>for (int \g<variableName> = \g<number1>; \g<variableName> > \g<number2>; \g<variableName> -= \g<number3>){\n\g<body>\g<blockIndent>}\n", None, 70),
-        # for i in range(2): smth
-        # for (int i = 0; i < 2; i += 1){ smth }
+        # for i in a: smth
+        # for (int i = 0; i < a.length; i++){ smth }
         (r"(?P<blockIndent>[ ]*)for[ ]*((?P<variableName>\S+))[ ]*in[ ]*(?P<arrayName>\S+)[ ]*:[\r\n]+(?P<body>(?P<indent>[ ]+)[^\r\n]+[\r\n]+((?P=indent)[^\r\n]+[\r\n]+)*)", r"\g<blockIndent>for (int \g<variableName> = 0; \g<variableName> < \g<arrayName>.length; \g<variableName>++){\n\g<body>\g<blockIndent>}\n", None, 70),
         # try: smth
         # try{ smth }
@@ -142,6 +146,24 @@ class PythonToJava(Translator):
         # 
         # 
         (r"", r"", None, 0)
+    ]
+
+    LESS_THEN_TEN = [
+        # c = "string"
+        # String c = "string"
+        (r"var[ ]*(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*\"[^\r\n]+\")", r"String \g<firstAssignment>", None, 0),
+        # c = 'c'
+        # char c = 'c'
+        (r"var[ ]*(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*\'[^\r\n]\')", r"char \g<firstAssignment>", None, 0),
+        # c = 0.12
+        # float c = 0.12f
+        (r"var[ ]*(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*(?P<value>\d+\.\d+)(?P<other>[^\r\n#$]*))", r"float \g<variable> = \g<value>f\g<other>", None, 0),
+        # c = 12
+        # int c = 12
+        (r"var[ ]*(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*\d+\D)", r"int \g<firstAssignment>", None, 0),
+        # c = True
+        # boolean c = True
+        (r"var[ ]*(?P<firstAssignment>(?P<variable>[_a-zA-Z0-9]+)[ ]*=[ ]*(true|false))", r"boolean \g<firstAssignment>", None, 0)
     ]
 
     LAST_RULES = []

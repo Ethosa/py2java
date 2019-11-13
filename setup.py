@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py2java",
-    version="0.0.1",
+    version="0.0.11",
     author="Ethosa",
     author_email="social.ethosa@gmail.com",
     description="Python to Java language translator",
