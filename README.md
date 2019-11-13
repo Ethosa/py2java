@@ -1,4 +1,7 @@
 <h1 align="center">Python to Java language Translator</h1>
+
+This library uses the Translator class from [retranslator library](https://github.com/linksplatform/RegularExpressions.Transformer/tree/master/python).
+
 Installing: pip install py2java 
 
 import:
