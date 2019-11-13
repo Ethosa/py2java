@@ -1,5 +1,6 @@
 <h1 align="center">Python to Java language Translator</h1>
-Install: ```pip install py2java```
+Install: ```pip install py2java```  
+
 import:
 ```python
 from py2java import PythonToJava
