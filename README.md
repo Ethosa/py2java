@@ -2,7 +2,7 @@
 
 This library uses the Translator class from [retranslator library](https://github.com/linksplatform/RegularExpressions.Transformer/tree/master/python).
 
-Installing: pip install py2java 
+Installing: ```pip install py2java```
 
 import:
 ```python
@@ -20,4 +20,9 @@ class lol(object):
 """
 translator = PythonToJava(useRegex=1)
 print(translator.compile(sourceText))
+```
+
+using java controller:
+```python
+jc = PythonToJava(useRegex=1, javaVersion=8) # standart javaVersion is 10
 ```
